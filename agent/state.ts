@@ -12,17 +12,17 @@ export const DEFAULT_MODEL = "grok-4-fast-reasoning";
 export const MAX_ITERATIONS = 20;
 
 /**
- * LangGraph state annotation for Dexter
+ * LangGraph state annotation for Minsky
  * Simple messages-only state for chat compatibility
  */
-export const DexterAnnotation = Annotation.Root({
+export const MinskyAnnotation = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
     reducer: messagesStateReducer,
     default: () => [],
   }),
 });
 
-export type DexterState = typeof DexterAnnotation.State;
+export type MinskyState = typeof MinskyAnnotation.State;
 
 /**
  * Helper to extract the user's query from messages

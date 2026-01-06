@@ -7,14 +7,14 @@ import {
   HumanMessage,
 } from "@langchain/core/messages";
 import { ChatOpenAI, ChatOpenAICallOptions } from "@langchain/openai";
-import { DexterAnnotation, DEFAULT_MODEL, MAX_ITERATIONS } from "./state.js";
+import { MinskyAnnotation, DEFAULT_MODEL, MAX_ITERATIONS } from "./state.js";
 import { LANGCHAIN_TOOLS } from "./tools.js";
 import { AGENT_SYSTEM_PROMPT } from "./prompts.js";
 
 /**
  * Hardcoded responses for common questions
  */
-const ABOUT_RESPONSE = `I'm **Dexter**, your financial research assistant. I help you analyze companies, compare stocks, and understand financial data.
+const ABOUT_RESPONSE = `I'm **Minsky**, a risk-focused financial research agent for traditional markets and crypto. I prioritize robustness over prediction, analyzing tail risks, volatility, and challenging fragile market narratives.
 
 ## What I Can Do
 
@@ -86,9 +86,18 @@ class ChatGrok extends ChatOpenAI {
 let iterationCount = 0;
 
 /**
+ * Fix malformed definition list syntax in model output
+ * Converts "Label\n: value" or "Label\n\n: value" to "Label: value"
+ */
+function fixDefinitionListSyntax(text: string): string {
+  // Match: one or more newlines followed by ": " at start of line
+  return text.replace(/\n+: /g, ": ");
+}
+
+/**
  * Handle hardcoded responses for common questions
  */
-function handleHardcodedResponse(state: typeof DexterAnnotation.State): {
+function handleHardcodedResponse(state: typeof MinskyAnnotation.State): {
   messages: BaseMessage[];
 } | null {
   const messages = state.messages;
@@ -118,7 +127,7 @@ function handleHardcodedResponse(state: typeof DexterAnnotation.State): {
  * Router: check for hardcoded responses first
  */
 function routeInput(
-  state: typeof DexterAnnotation.State,
+  state: typeof MinskyAnnotation.State,
 ): "hardcoded" | "agent" {
   const hardcoded = handleHardcodedResponse(state);
   return hardcoded ? "hardcoded" : "agent";
@@ -127,7 +136,7 @@ function routeInput(
 /**
  * Return hardcoded response
  */
-function returnHardcodedResponse(state: typeof DexterAnnotation.State): {
+function returnHardcodedResponse(state: typeof MinskyAnnotation.State): {
   messages: BaseMessage[];
 } {
   return handleHardcodedResponse(state) || { messages: [] };
@@ -137,7 +146,7 @@ function returnHardcodedResponse(state: typeof DexterAnnotation.State): {
  * Call the model with tools bound
  */
 async function callModel(
-  state: typeof DexterAnnotation.State,
+  state: typeof MinskyAnnotation.State,
 ): Promise<{ messages: BaseMessage[] }> {
   const model = new ChatGrok({
     model: DEFAULT_MODEL,
@@ -156,6 +165,11 @@ async function callModel(
     ...state.messages,
   ]);
 
+  // Fix definition list syntax in text responses
+  if (typeof response.content === "string" && response.content) {
+    response.content = fixDefinitionListSyntax(response.content);
+  }
+
   iterationCount++;
   return { messages: [response] };
 }
@@ -165,7 +179,7 @@ async function callModel(
  * Also enforces max iterations to prevent cost blowup
  */
 function routeModelOutput(
-  state: typeof DexterAnnotation.State,
+  state: typeof MinskyAnnotation.State,
 ): "__end__" | "tools" {
   // Safety: stop after max iterations
   if (iterationCount >= MAX_ITERATIONS) {
@@ -196,7 +210,7 @@ const toolNode = new ToolNode(LANGCHAIN_TOOLS);
 /**
  * Announce what tools are about to be called
  */
-function announceToolCalls(state: typeof DexterAnnotation.State): {
+function announceToolCalls(state: typeof MinskyAnnotation.State): {
   messages: BaseMessage[];
 } {
   const lastMessage = state.messages[state.messages.length - 1];
@@ -222,7 +236,7 @@ function announceToolCalls(state: typeof DexterAnnotation.State): {
 /**
  * Summarize what tools were just called to keep user informed
  */
-function summarizeToolResults(state: typeof DexterAnnotation.State): {
+function summarizeToolResults(state: typeof MinskyAnnotation.State): {
   messages: BaseMessage[];
 } {
   const messages = state.messages;
@@ -261,7 +275,7 @@ function summarizeToolResults(state: typeof DexterAnnotation.State): {
  * 6. Agent loops until it has enough info to respond
  * 7. Max 10 iterations to control costs
  */
-const workflow = new StateGraph(DexterAnnotation)
+const workflow = new StateGraph(MinskyAnnotation)
   .addNode("hardcoded", returnHardcodedResponse)
   .addNode("agent", callModel)
   .addNode("announce", announceToolCalls)
@@ -287,7 +301,7 @@ export const graph = workflow.compile({
   checkpointer: new MemorySaver(),
 });
 
-graph.name = "Dexter Financial Agent";
+graph.name = "Minsky";
 
 // Re-export types
-export { DexterAnnotation, type DexterState } from "./state.js";
+export { MinskyAnnotation, type MinskyState } from "./state.js";

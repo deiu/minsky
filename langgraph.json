@@ -3,7 +3,7 @@
   "dockerfile_lines": [],
   "dependencies": ["."],
   "graphs": {
-    "dexter": "./agent/index.ts:graph"
+    "minsky": "./agent/index.ts:graph"
   },
   "env": ".env"
 }

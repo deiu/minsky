@@ -1,10 +1,10 @@
-# Dexter
+# Minsky
 
 A risk-focused financial research agent for traditional markets and crypto.
 
 ## Overview
 
-Dexter is an autonomous research agent that prioritizes **robustness over prediction**. It analyzes markets through the lens of risk, volatility, and tail events—challenging fragile narratives rather than reinforcing them.
+Minsky is an autonomous research agent that prioritizes **robustness over prediction**. It analyzes markets through the lens of risk, volatility, and tail events—challenging fragile narratives rather than reinforcing them.
 
 **Philosophy:**
 - Fat tails and black swans matter more than normal distributions
@@ -27,8 +27,8 @@ Dexter is an autonomous research agent that prioritizes **robustness over predic
 ### Installation
 
 ```bash
-git clone https://github.com/virattt/dexter.git
-cd dexter
+git clone https://github.com/virattt/minsky.git
+cd minsky
 npm install
 ```
 

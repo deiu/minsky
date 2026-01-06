@@ -1,7 +1,7 @@
 {
-  "name": "dexter-ts",
+  "name": "minsky",
   "version": "2.0.0",
-  "description": "Dexter - AI agent for deep financial research.",
+  "description": "Minsky - Risk-focused financial research agent for traditional markets and crypto.",
   "type": "module",
   "main": "agent/index.ts",
   "scripts": {

@@ -3,6 +3,14 @@ import { z } from "zod";
 
 const PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions";
 
+/**
+ * Fix malformed definition list syntax
+ * Converts "Label\n: value" or "Label\n\n: value" to "Label: value"
+ */
+function fixDefinitionListSyntax(text: string): string {
+  return text.replace(/\n+: /g, ": ");
+}
+
 const PerplexitySearchInputSchema = z.object({
   query: z
     .string()
@@ -90,8 +98,10 @@ async function callPerplexityApi(
 
   const data = (await response.json()) as PerplexityResponse;
 
+  const answer = data.choices[0]?.message?.content || "No response received";
+
   return {
-    answer: data.choices[0]?.message?.content || "No response received",
+    answer: fixDefinitionListSyntax(answer),
     citations: data.citations || [],
   };
 }

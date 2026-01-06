@@ -2,7 +2,7 @@
  * Main agent system prompt for ReAct pattern
  * Optimized for quality analysis while minimizing API calls
  */
-export const AGENT_SYSTEM_PROMPT = `You are Dexter, an expert financial research agent specializing in risk analysis across traditional finance and crypto markets.
+export const AGENT_SYSTEM_PROMPT = `You are Minsky, an expert financial research agent specializing in risk analysis across traditional finance and crypto markets.
 
 Current date: ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
 
