@@ -1,5 +1,6 @@
-import { Annotation, messagesStateReducer } from "@langchain/langgraph";
+import { MessagesZodState } from "@langchain/langgraph";
 import { BaseMessage, HumanMessage } from "@langchain/core/messages";
+import { z } from "zod";
 
 /**
  * Default model
@@ -7,22 +8,22 @@ import { BaseMessage, HumanMessage } from "@langchain/core/messages";
 export const DEFAULT_MODEL = "grok-4-fast-reasoning";
 
 /**
+ * Runtime configuration exposed to LangGraph Studio
+ */
+export const ConfigSchema = z.object({
+  model: z.string().default(DEFAULT_MODEL),
+});
+
+/**
  * Max iterations for the ReAct loop to prevent runaway costs
  */
 export const MAX_ITERATIONS = 20;
 
 /**
- * LangGraph state annotation for Minsky
- * Simple messages-only state for chat compatibility
+ * LangGraph state schema for Minsky
+ * Uses Zod-based state for Studio compatibility
  */
-export const MinskyAnnotation = Annotation.Root({
-  messages: Annotation<BaseMessage[]>({
-    reducer: messagesStateReducer,
-    default: () => [],
-  }),
-});
-
-export type MinskyState = typeof MinskyAnnotation.State;
+export const MinskyState = MessagesZodState;
 
 /**
  * Helper to extract the user's query from messages

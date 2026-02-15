@@ -12,9 +12,9 @@
     "dev": "npx @langchain/langgraph-cli dev"
   },
   "dependencies": {
-    "@langchain/core": "^0.3.57",
-    "@langchain/langgraph": "^0.3.0",
-    "@langchain/openai": "^0.3.0",
+    "@langchain/core": "^1.1.24",
+    "@langchain/langgraph": "^1.1.4",
+    "@langchain/openai": "^1.2.7",
     "dotenv": "^17.2.3",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.25.0"

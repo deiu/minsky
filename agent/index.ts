@@ -7,7 +7,13 @@ import {
   HumanMessage,
 } from "@langchain/core/messages";
 import { ChatOpenAI, ChatOpenAICallOptions } from "@langchain/openai";
-import { MinskyAnnotation, DEFAULT_MODEL, MAX_ITERATIONS } from "./state.js";
+import {
+  MinskyState,
+  ConfigSchema,
+  DEFAULT_MODEL,
+  MAX_ITERATIONS,
+} from "./state.js";
+import { z } from "zod";
 import { LANGCHAIN_TOOLS } from "./tools.js";
 import { AGENT_SYSTEM_PROMPT } from "./prompts.js";
 
@@ -70,11 +76,8 @@ function isAboutQuestion(text: string): boolean {
  * Custom ChatOpenAI that strips unsupported parameters for Grok models
  */
 class ChatGrok extends ChatOpenAI {
-  invocationParams(
-    options?: Partial<ChatOpenAICallOptions>,
-    extra?: { streaming?: boolean },
-  ) {
-    const params = super.invocationParams(options, extra);
+  invocationParams(options?: Partial<ChatOpenAICallOptions>) {
+    const params = super.invocationParams(options);
     // Grok doesn't support these parameters
     delete (params as Record<string, unknown>).presence_penalty;
     delete (params as Record<string, unknown>).frequency_penalty;
@@ -97,7 +100,7 @@ function fixDefinitionListSyntax(text: string): string {
 /**
  * Handle hardcoded responses for common questions
  */
-function handleHardcodedResponse(state: typeof MinskyAnnotation.State): {
+function handleHardcodedResponse(state: z.infer<typeof MinskyState>): {
   messages: BaseMessage[];
 } | null {
   const messages = state.messages;
@@ -126,9 +129,7 @@ function handleHardcodedResponse(state: typeof MinskyAnnotation.State): {
 /**
  * Router: check for hardcoded responses first
  */
-function routeInput(
-  state: typeof MinskyAnnotation.State,
-): "hardcoded" | "agent" {
+function routeInput(state: z.infer<typeof MinskyState>): "hardcoded" | "agent" {
   const hardcoded = handleHardcodedResponse(state);
   return hardcoded ? "hardcoded" : "agent";
 }
@@ -136,7 +137,7 @@ function routeInput(
 /**
  * Return hardcoded response
  */
-function returnHardcodedResponse(state: typeof MinskyAnnotation.State): {
+function returnHardcodedResponse(state: z.infer<typeof MinskyState>): {
   messages: BaseMessage[];
 } {
   return handleHardcodedResponse(state) || { messages: [] };
@@ -146,7 +147,7 @@ function returnHardcodedResponse(state: typeof MinskyAnnotation.State): {
  * Call the model with tools bound
  */
 async function callModel(
-  state: typeof MinskyAnnotation.State,
+  state: z.infer<typeof MinskyState>,
 ): Promise<{ messages: BaseMessage[] }> {
   const model = new ChatGrok({
     model: DEFAULT_MODEL,
@@ -179,7 +180,7 @@ async function callModel(
  * Also enforces max iterations to prevent cost blowup
  */
 function routeModelOutput(
-  state: typeof MinskyAnnotation.State,
+  state: z.infer<typeof MinskyState>,
 ): "__end__" | "tools" {
   // Safety: stop after max iterations
   if (iterationCount >= MAX_ITERATIONS) {
@@ -210,7 +211,7 @@ const toolNode = new ToolNode(LANGCHAIN_TOOLS);
 /**
  * Announce what tools are about to be called
  */
-function announceToolCalls(state: typeof MinskyAnnotation.State): {
+function announceToolCalls(state: z.infer<typeof MinskyState>): {
   messages: BaseMessage[];
 } {
   const lastMessage = state.messages[state.messages.length - 1];
@@ -236,7 +237,7 @@ function announceToolCalls(state: typeof MinskyAnnotation.State): {
 /**
  * Summarize what tools were just called to keep user informed
  */
-function summarizeToolResults(state: typeof MinskyAnnotation.State): {
+function summarizeToolResults(state: z.infer<typeof MinskyState>): {
   messages: BaseMessage[];
 } {
   const messages = state.messages;
@@ -275,7 +276,7 @@ function summarizeToolResults(state: typeof MinskyAnnotation.State): {
  * 6. Agent loops until it has enough info to respond
  * 7. Max 10 iterations to control costs
  */
-const workflow = new StateGraph(MinskyAnnotation)
+const workflow = new StateGraph(MinskyState, { context: ConfigSchema })
   .addNode("hardcoded", returnHardcodedResponse)
   .addNode("agent", callModel)
   .addNode("announce", announceToolCalls)
@@ -304,4 +305,4 @@ export const graph = workflow.compile({
 graph.name = "Minsky";
 
 // Re-export types
-export { MinskyAnnotation, type MinskyState } from "./state.js";
+export { MinskyState } from "./state.js";
